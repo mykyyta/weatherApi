@@ -6,12 +6,12 @@ import (
 )
 
 type Subscription struct {
-	ID             uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Email          string    `gorm:"not null;uniqueIndex"`
-	City           string    `gorm:"not null"`
-	Frequency      string    `gorm:"type:text;check:frequency IN ('daily','hourly');not null"`
-	IsConfirmed    bool      `gorm:"default:false"`
-	IsUnsubscribed bool      `gorm:"default:false"`
-	Token          string    `gorm:"not null"`
-	CreatedAt      time.Time
+	ID             uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	Email          string    `gorm:"not null;uniqueIndex" json:"email"`
+	City           string    `gorm:"not null" json:"city"`
+	Frequency      string    `gorm:"type:text;check:frequency IN ('daily','hourly');not null" json:"frequency"`
+	IsConfirmed    bool      `gorm:"default:false" json:"is_confirmed"`
+	IsUnsubscribed bool      `gorm:"default:false" json:"is_unsubscribed"`
+	Token          string    `gorm:"not null" json:"-"`
+	CreatedAt      time.Time `json:"created_at"`
 }

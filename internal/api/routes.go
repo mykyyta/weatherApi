@@ -7,4 +7,5 @@ func RegisterRoutes(r *gin.Engine) {
 	api.POST("/subscribe", subscribeHandler)
 	api.GET("/confirm/:token", confirmHandler)
 	api.GET("/unsubscribe/:token", unsubscribeHandler)
+	api.GET("/subscriptions", listSubscriptionsHandler)
 }
