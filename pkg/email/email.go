@@ -1,0 +1,37 @@
+package email
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
+)
+
+func SendEmail(toEmail, subject, plainTextContent, htmlContent string) error {
+	from := mail.NewEmail("WeatherBot", os.Getenv("EMAIL_FROM"))
+	to := mail.NewEmail("User", toEmail)
+	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
+
+	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
+	response, err := client.Send(message)
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode >= 400 {
+		return fmt.Errorf("SendGrid failed with status %d: %s", response.StatusCode, response.Body)
+	}
+
+	return nil
+}
+
+func SendConfirmationEmail(toEmail, token string) error {
+	subject := "Confirm your Weather Subscription"
+
+	confirmURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", token)
+	plainText := "Please confirm your subscription: " + confirmURL
+	htmlContent := fmt.Sprintf(`<p>Click below to confirm your subscription:</p><p><a href="%s">Confirm Subscription</a></p>`, confirmURL)
+
+	return SendEmail(toEmail, subject, plainText, htmlContent)
+}

@@ -1,24 +1,21 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 	"weatherApi/internal/db"
 	"weatherApi/internal/model"
+	emailutil "weatherApi/pkg/email"
+	"weatherApi/pkg/jwtutil"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type SubscribeRequest struct {
 	Email     string `form:"email" binding:"required,email"`
 	City      string `form:"city" binding:"required"`
 	Frequency string `form:"frequency" binding:"required,oneof=daily hourly"`
-}
-
-func RegisterRoutes(r *gin.Engine) {
-	api := r.Group("/api")
-	api.POST("/subscribe", subscribeHandler)
 }
 
 func subscribeHandler(c *gin.Context) {
@@ -30,18 +27,33 @@ func subscribeHandler(c *gin.Context) {
 
 	// Перевірка, чи вже є така підписка
 	var existing model.Subscription
-	if err := db.DB.Where("email = ?", req.Email).First(&existing).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
+	err := db.DB.Where("email = ?", req.Email).First(&existing).Error
+
+	if err == nil {
+		if existing.IsConfirmed && !existing.IsUnsubscribed {
+			// Підписка вже активна
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed and active"})
+			return
+		}
+		// Якщо підтвердження ще не було, або користувач відписався — видалимо попередній запис
+		_ = db.DB.Delete(&existing)
+	}
+
+	// Генеруємо токен
+	token, err := jwtutil.Generate(req.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create token"})
 		return
 	}
 
 	sub := model.Subscription{
-		Email:       req.Email,
-		City:        req.City,
-		Frequency:   req.Frequency,
-		IsConfirmed: false,
-		Token:       uuid.New().String(),
-		CreatedAt:   time.Now(),
+		Email:          req.Email,
+		City:           req.City,
+		Frequency:      req.Frequency,
+		IsConfirmed:    false,
+		IsUnsubscribed: false,
+		Token:          token,
+		CreatedAt:      time.Now(),
 	}
 
 	if err := db.DB.Create(&sub).Error; err != nil {
@@ -49,7 +61,35 @@ func subscribeHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: надіслати лист із підтвердженням
+	confirmURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", token)
+	fmt.Println("Confirm URL:", confirmURL)
+
+	go func() {
+		if err := emailutil.SendConfirmationEmail(req.Email, token); err != nil {
+			fmt.Printf("⚠️ Failed to send confirmation email to %s: %v\n", req.Email, err)
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Subscription received. Please confirm via email."})
+}
+
+func confirmHandler(c *gin.Context) {
+	token := c.Param("token")
+
+	email, err := jwtutil.Parse(token)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid or expired token"})
+		return
+	}
+
+	var sub model.Subscription
+	if err := db.DB.Where("email = ?", email).First(&sub).Error; err != nil {
+		c.JSON(404, gin.H{"error": "not found"})
+		return
+	}
+
+	sub.IsConfirmed = true
+	db.DB.Save(&sub)
+
+	c.JSON(200, gin.H{"message": "subscription confirmed"})
 }
