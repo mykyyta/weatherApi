@@ -8,4 +8,5 @@ func RegisterRoutes(r *gin.Engine) {
 	api.GET("/confirm/:token", confirmHandler)
 	api.GET("/unsubscribe/:token", unsubscribeHandler)
 	api.GET("/subscriptions", listSubscriptionsHandler)
+	api.GET("/weather", getWeatherHandler)
 }

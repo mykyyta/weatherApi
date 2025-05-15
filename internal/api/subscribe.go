@@ -25,21 +25,17 @@ func subscribeHandler(c *gin.Context) {
 		return
 	}
 
-	// Перевірка, чи вже є така підписка
 	var existing model.Subscription
 	err := db.DB.Where("email = ?", req.Email).First(&existing).Error
 
 	if err == nil {
 		if existing.IsConfirmed && !existing.IsUnsubscribed {
-			// Підписка вже активна
 			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed and active"})
 			return
 		}
-		// Якщо підтвердження ще не було, або користувач відписався — видалимо попередній запис
 		_ = db.DB.Delete(&existing)
 	}
 
-	// Генеруємо токен
 	token, err := jwtutil.Generate(req.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create token"})
