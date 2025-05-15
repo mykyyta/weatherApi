@@ -34,16 +34,18 @@ func sendWeatherUpdates(frequency string) {
 	}
 
 	for _, sub := range subs {
-		weather, status, err := weatherapi.FetchWithStatus(sub.City)
-		if err != nil {
-			log.Printf("[Scheduler] Weather fetch error for %s: %v (status: %d)", sub.City, err, status)
-			continue
-		}
-
-		if err := email.SendWeatherEmail(sub.Email, weather, sub.City); err != nil {
-			log.Printf("[Scheduler] Failed to send email to %s: %v", sub.Email, err)
+		if err := ProcessSubscription(sub); err != nil {
+			log.Printf("[Scheduler] Failed to process %s: %v", sub.Email, err)
 		} else {
 			log.Printf("[Scheduler] Weather sent to %s", sub.Email)
 		}
 	}
+}
+
+func ProcessSubscription(sub model.Subscription) error {
+	weather, _, err := weatherapi.FetchWithStatus(sub.City)
+	if err != nil {
+		return err
+	}
+	return email.SendWeatherEmail(sub.Email, weather, sub.City)
 }
