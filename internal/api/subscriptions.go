@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+
 	"weatherApi/internal/model"
 
 	"github.com/gin-gonic/gin"

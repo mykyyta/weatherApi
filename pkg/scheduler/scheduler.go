@@ -1,12 +1,14 @@
 package scheduler
 
 import (
-	"gorm.io/gorm"
 	"log"
 	"time"
+
 	"weatherApi/internal/model"
 	"weatherApi/pkg/email"
 	"weatherApi/pkg/weatherapi"
+
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB

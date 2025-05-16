@@ -3,8 +3,10 @@ package weatherapi
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+
 	"weatherApi/internal/model"
 )
 
@@ -24,9 +26,13 @@ func FetchWithStatus(city string) (*model.Weather, int, error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, http.StatusBadGateway, fmt.Errorf("Failed to fetch weather data")
+		return nil, http.StatusBadGateway, fmt.Errorf("failed to fetch weather data: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Printf("failed to close response body: %v", cerr)
+		}
+	}()
 
 	switch resp.StatusCode {
 	case 400:

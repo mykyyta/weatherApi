@@ -1,14 +1,15 @@
 package api
 
 import (
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,7 @@ func setupTestRouterWithDB(t *testing.T) *gin.Engine {
 
 	SetDB(db)
 
-	// 4. Роутер
+	gin.SetMode(gin.TestMode)
 	r := gin.Default()
 	RegisterRoutes(r)
 	return r

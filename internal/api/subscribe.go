@@ -2,12 +2,14 @@ package api
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"time"
+
 	"weatherApi/internal/model"
 	emailutil "weatherApi/pkg/email"
 	"weatherApi/pkg/jwtutil"
+
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,8 +1,9 @@
 package jwtutil
 
 import (
-	"github.com/golang-jwt/jwt/v5"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var SecretKey = []byte("super-secret") // краще з .env

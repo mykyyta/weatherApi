@@ -3,6 +3,7 @@ package email
 import (
 	"fmt"
 	"os"
+
 	"weatherApi/internal/model"
 
 	"github.com/sendgrid/sendgrid-go"

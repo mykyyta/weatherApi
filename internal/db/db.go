@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 
+	"weatherApi/internal/model"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"weatherApi/internal/model"
 )
 
 var DB *gorm.DB
