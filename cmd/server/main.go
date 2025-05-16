@@ -22,16 +22,17 @@ func main() {
 		log.Println("No .env file found")
 	}
 
-	db.ConnectDB()
+	db.ConnectDefaultDB()
+	dbInstance := db.DB
 
-	// Створюємо контекст для керування завершенням
+	api.SetDB(dbInstance)
+	scheduler.SetDB(dbInstance)
+
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Запускаємо scheduler у фоновому режимі
 	go scheduler.StartWeatherScheduler()
 
-	// Ловимо сигнали завершення (Ctrl+C / SIGTERM)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {

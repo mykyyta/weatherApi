@@ -1,13 +1,19 @@
 package scheduler
 
 import (
+	"gorm.io/gorm"
 	"log"
 	"time"
-	"weatherApi/internal/db"
 	"weatherApi/internal/model"
 	"weatherApi/pkg/email"
 	"weatherApi/pkg/weatherapi"
 )
+
+var DB *gorm.DB
+
+func SetDB(db *gorm.DB) {
+	DB = db
+}
 
 func StartWeatherScheduler() {
 	log.Println("[Scheduler] started")
@@ -28,7 +34,7 @@ func StartWeatherScheduler() {
 
 func sendWeatherUpdates(frequency string) {
 	var subs []model.Subscription
-	if err := db.DB.Where("is_confirmed = ? AND is_unsubscribed = ? AND frequency = ?", true, false, frequency).Find(&subs).Error; err != nil {
+	if err := DB.Where("is_confirmed = ? AND is_unsubscribed = ? AND frequency = ?", true, false, frequency).Find(&subs).Error; err != nil {
 		log.Printf("[Scheduler] Failed to query subscriptions: %v", err)
 		return
 	}

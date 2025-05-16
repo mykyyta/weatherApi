@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"weatherApi/internal/db"
 	"weatherApi/internal/model"
 	"weatherApi/pkg/jwtutil"
 
@@ -19,7 +18,7 @@ func unsubscribeHandler(c *gin.Context) {
 	}
 
 	var sub model.Subscription
-	if err := db.DB.Where("email = ?", email).First(&sub).Error; err != nil {
+	if err := DB.Where("email = ?", email).First(&sub).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Subscription not found"})
 		return
 	}
@@ -30,7 +29,7 @@ func unsubscribeHandler(c *gin.Context) {
 	}
 
 	sub.IsUnsubscribed = true
-	if err := db.DB.Save(&sub).Error; err != nil {
+	if err := DB.Save(&sub).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unsubscribe"})
 		return
 	}

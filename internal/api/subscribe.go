@@ -2,9 +2,9 @@ package api
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
 	"time"
-	"weatherApi/internal/db"
 	"weatherApi/internal/model"
 	emailutil "weatherApi/pkg/email"
 	"weatherApi/pkg/jwtutil"
@@ -21,19 +21,19 @@ type SubscribeRequest struct {
 func subscribeHandler(c *gin.Context) {
 	var req SubscribeRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
 	var existing model.Subscription
-	err := db.DB.Where("email = ?", req.Email).First(&existing).Error
+	err := DB.Where("email = ?", req.Email).First(&existing).Error
 
 	if err == nil {
 		if existing.IsConfirmed && !existing.IsUnsubscribed {
-			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed and active"})
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
 			return
 		}
-		_ = db.DB.Delete(&existing)
+		_ = DB.Delete(&existing)
 	}
 
 	token, err := jwtutil.Generate(req.Email)
@@ -43,6 +43,7 @@ func subscribeHandler(c *gin.Context) {
 	}
 
 	sub := model.Subscription{
+		ID:             uuid.New().String(),
 		Email:          req.Email,
 		City:           req.City,
 		Frequency:      req.Frequency,
@@ -52,7 +53,7 @@ func subscribeHandler(c *gin.Context) {
 		CreatedAt:      time.Now(),
 	}
 
-	if err := db.DB.Create(&sub).Error; err != nil {
+	if err := DB.Create(&sub).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save subscription"})
 		return
 	}
@@ -66,7 +67,7 @@ func subscribeHandler(c *gin.Context) {
 		}
 	}()
 
-	c.JSON(http.StatusOK, gin.H{"message": "Subscription received. Please confirm via email."})
+	c.JSON(http.StatusOK, gin.H{"message": "Subscription successful. Confirmation email sent."})
 }
 
 func confirmHandler(c *gin.Context) {
@@ -79,13 +80,13 @@ func confirmHandler(c *gin.Context) {
 	}
 
 	var sub model.Subscription
-	if err := db.DB.Where("email = ?", email).First(&sub).Error; err != nil {
+	if err := DB.Where("email = ?", email).First(&sub).Error; err != nil {
 		c.JSON(404, gin.H{"error": "not found"})
 		return
 	}
 
 	sub.IsConfirmed = true
-	db.DB.Save(&sub)
+	DB.Save(&sub)
 
 	c.JSON(200, gin.H{"message": "subscription confirmed"})
 }

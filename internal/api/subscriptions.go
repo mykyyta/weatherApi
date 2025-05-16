@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"weatherApi/internal/db"
 	"weatherApi/internal/model"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +10,7 @@ import (
 func listSubscriptionsHandler(c *gin.Context) {
 	var subs []model.Subscription
 
-	if err := db.DB.Find(&subs).Error; err != nil {
+	if err := DB.Find(&subs).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve subscriptions"})
 		return
 	}
