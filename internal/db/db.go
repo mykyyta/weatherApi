@@ -12,8 +12,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// DB is the globally accessible database instance used across the application.
+// It is initialized once via ConnectDefaultDB or manually through InitDatabase.
 var DB *gorm.DB
 
+// InitDatabase initializes and returns a GORM DB connection based on the dbType and DSN provided.
+// Supports "postgres" and "sqlite". Also handles schema migration and optional Postgres extension.
+// This function should typically be called once at startup.
 func InitDatabase(dbType, dsn string) (*gorm.DB, error) {
 	var dialector gorm.Dialector
 
@@ -31,6 +36,7 @@ func InitDatabase(dbType, dsn string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to connect database: %v", err)
 	}
 
+	// Enable pgcrypto (required for UUID generation, etc.)
 	if dbType == "postgres" {
 		err = db.Exec(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`).Error
 		if err != nil {
@@ -38,6 +44,7 @@ func InitDatabase(dbType, dsn string) (*gorm.DB, error) {
 		}
 	}
 
+	// Run automatic schema migration for Subscription model
 	err = db.AutoMigrate(&model.Subscription{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate: %v", err)
@@ -46,8 +53,11 @@ func InitDatabase(dbType, dsn string) (*gorm.DB, error) {
 	return db, nil
 }
 
+// ConnectDefaultDB reads DB_TYPE and DB_URL from environment variables,
+// initializes the global DB instance, and applies migrations.
+// Use this in main.go to ensure the DB is ready before handling requests.
 func ConnectDefaultDB() {
-	dbType := os.Getenv("DB_TYPE") // "postgres"
+	dbType := os.Getenv("DB_TYPE") // e.g., "postgres" or "sqlite"
 	dsn := os.Getenv("DB_URL")
 
 	var err error

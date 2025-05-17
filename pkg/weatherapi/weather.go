@@ -10,6 +10,8 @@ import (
 	"weatherApi/internal/model"
 )
 
+// weatherAPIResponse defines the structure of the external API response (weatherapi.com).
+// Used internally to decode the raw JSON before mapping to our model.
 type weatherAPIResponse struct {
 	Current struct {
 		TempC     float64 `json:"temp_c"`
@@ -20,10 +22,16 @@ type weatherAPIResponse struct {
 	} `json:"current"`
 }
 
+// FetchWithStatus retrieves current weather for the given city from weatherapi.com.
+// Returns a pointer to Weather model, HTTP-like status code, and error if any.
+// This function is used in both API responses and email updates.
 func FetchWithStatus(city string) (*model.Weather, int, error) {
 	apiKey := os.Getenv("WEATHER_API_KEY")
-	url := fmt.Sprintf("https://api.weatherapi.com/v1/current.json?key=%s&q=%s", apiKey, city)
+	if apiKey == "" {
+		return nil, http.StatusInternalServerError, fmt.Errorf("weather API key not set")
+	}
 
+	url := fmt.Sprintf("https://api.weatherapi.com/v1/current.json?key=%s&q=%s", apiKey, city)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, http.StatusBadGateway, fmt.Errorf("failed to fetch weather data: %w", err)
@@ -40,7 +48,7 @@ func FetchWithStatus(city string) (*model.Weather, int, error) {
 	case 404:
 		return nil, http.StatusNotFound, fmt.Errorf("City not found")
 	case 200:
-		// OK
+		// OK — continue parsing
 	default:
 		return nil, http.StatusBadGateway, fmt.Errorf("Weather API returned unexpected status")
 	}
@@ -50,6 +58,7 @@ func FetchWithStatus(city string) (*model.Weather, int, error) {
 		return nil, http.StatusInternalServerError, fmt.Errorf("Failed to parse weather data")
 	}
 
+	// Map response data to internal model
 	result := &model.Weather{
 		Temperature: data.Current.TempC,
 		Humidity:    data.Current.Humidity,
@@ -59,6 +68,9 @@ func FetchWithStatus(city string) (*model.Weather, int, error) {
 	return result, http.StatusOK, nil
 }
 
+// CityExists checks whether the specified city is valid using the external API.
+// Used during subscription to validate user input before storing in DB.
+// Returns false for 400/404, true for 200, and error for any other status.
 func CityExists(city string) (bool, error) {
 	apiKey := os.Getenv("WEATHER_API_KEY")
 	if apiKey == "" {

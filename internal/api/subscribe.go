@@ -20,6 +20,11 @@ type SubscribeRequest struct {
 	Frequency string `form:"frequency" binding:"required,oneof=daily hourly"`
 }
 
+// subscribeHandler handles new subscription requests:
+// - validates input
+// - checks if the city exists
+// - updates or creates a subscription
+// - sends confirmation email asynchronously
 func subscribeHandler(c *gin.Context) {
 	var req SubscribeRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -45,21 +50,25 @@ func subscribeHandler(c *gin.Context) {
 	}
 
 	if existingSub != nil {
+		// Update existing unconfirmed/unsubscribed subscription with new data and token
 		if err := updateSubscription(existingSub, req, token); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update subscription"})
 			return
 		}
 	} else {
+		// Create new subscription
 		if err := createSubscription(req, token); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save subscription"})
 			return
 		}
 	}
 
+	// Send confirmation email in a separate goroutine
 	sendConfirmationEmailAsync(req.Email, token)
 	c.JSON(http.StatusOK, gin.H{"message": "Subscription successful. Confirmation email sent."})
 }
 
+// validateCity checks if the requested city exists using the external weather API
 func validateCity(city string) error {
 	ok, err := weatherapi.CityExists(city)
 	if err != nil {
@@ -71,6 +80,8 @@ func validateCity(city string) error {
 	return nil
 }
 
+// checkExistingSubscription returns an existing subscription if found,
+// or an error if the email is already subscribed and confirmed
 func checkExistingSubscription(req SubscribeRequest) (*model.Subscription, error) {
 	var existing model.Subscription
 	err := DB.Where("email = ?", req.Email).First(&existing).Error
@@ -83,10 +94,12 @@ func checkExistingSubscription(req SubscribeRequest) (*model.Subscription, error
 	return nil, nil
 }
 
+// generateToken creates a JWT for email confirmation and unsubscribe links
 func generateToken(email string) (string, error) {
 	return jwtutil.Generate(email)
 }
 
+// createSubscription saves a new unconfirmed subscription to the database
 func createSubscription(req SubscribeRequest, token string) error {
 	sub := model.Subscription{
 		ID:             uuid.New().String(),
@@ -101,6 +114,7 @@ func createSubscription(req SubscribeRequest, token string) error {
 	return DB.Create(&sub).Error
 }
 
+// updateSubscription updates an existing subscription with new values and resets confirmation status
 func updateSubscription(sub *model.Subscription, req SubscribeRequest, token string) error {
 	sub.City = req.City
 	sub.Frequency = req.Frequency
@@ -111,6 +125,7 @@ func updateSubscription(sub *model.Subscription, req SubscribeRequest, token str
 	return DB.Save(sub).Error
 }
 
+// sendConfirmationEmailAsync sends the confirmation email in a background goroutine
 func sendConfirmationEmailAsync(email, token string) {
 	go func() {
 		if err := emailutil.SendConfirmationEmail(email, token); err != nil {
@@ -119,6 +134,7 @@ func sendConfirmationEmailAsync(email, token string) {
 	}()
 }
 
+// confirmHandler validates the token and marks the subscription as confirmed
 func confirmHandler(c *gin.Context) {
 	token := c.Param("token")
 

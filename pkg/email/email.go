@@ -11,6 +11,10 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+// SendEmail sends an email via SendGrid using environment variables:
+// - SENDGRID_API_KEY: API key for authentication
+// - EMAIL_FROM: sender email address
+// Fails if SendGrid responds with status code >= 400.
 func SendEmail(toEmail, subject, plainTextContent, htmlContent string) error {
 	from := mail.NewEmail("weatherApp", os.Getenv("EMAIL_FROM"))
 	to := mail.NewEmail("User", toEmail)
@@ -29,16 +33,23 @@ func SendEmail(toEmail, subject, plainTextContent, htmlContent string) error {
 	return nil
 }
 
+// SendConfirmationEmail sends a confirmation link to the user's email.
+// The token is embedded as part of a URL and used for verifying the subscription.
 func SendConfirmationEmail(toEmail, token string) error {
 	subject := "Підтвердіть вашу підписку на погодні сповіщення"
 
 	confirmURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", token)
 	plainText := "Будь ласка, підтвердіть вашу підписку: " + confirmURL
-	htmlContent := fmt.Sprintf(`<p>Натисніть нижче для підтвердження вашої підписки:</p><p><a href="%s">Підтвердити підписку</a></p>`, confirmURL)
+	htmlContent := fmt.Sprintf(
+		`<p>Натисніть нижче для підтвердження вашої підписки:</p><p><a href="%s">Підтвердити підписку</a></p>`,
+		confirmURL,
+	)
 
 	return SendEmail(toEmail, subject, plainText, htmlContent)
 }
 
+// SendWeatherEmail sends a weather update to the user with an unsubscribe link.
+// The token is used in the unsubscribe URL and must be securely generated.
 func SendWeatherEmail(toEmail string, weather *model.Weather, city string, token string) error {
 	caser := cases.Title(language.English)
 	subject := fmt.Sprintf("Ваше оновлення погоди для %s", caser.String(city))
