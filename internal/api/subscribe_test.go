@@ -1,12 +1,16 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"weatherApi/config"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -18,6 +22,26 @@ import (
 
 	"weatherApi/internal/model"
 )
+
+// mustSetEnv sets an environment variable and logs fatal error if it fails.
+func mustSetEnv(key, value string) {
+	if err := os.Setenv(key, value); err != nil {
+		log.Fatalf("failed to set env %s: %v", key, err)
+	}
+}
+
+// TestMain is the entry point for tests in this package.
+func TestMain(m *testing.M) {
+	mustSetEnv("SENDGRID_API_KEY", "dummy-key")
+	mustSetEnv("EMAIL_FROM", "test@example.com")
+	mustSetEnv("DB_URL", "dummy-db-url")
+	mustSetEnv("JWT_SECRET", "dummy-jwt-secret")
+	mustSetEnv("WEATHER_API_KEY", "dummy-weather-key")
+
+	config.Reload()
+
+	os.Exit(m.Run())
+}
 
 // setupTestRouterWithDB creates an in-memory SQLite database and initializes
 // a test router with all API routes registered. It also sets up a mock city

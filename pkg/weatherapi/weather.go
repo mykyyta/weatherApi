@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
+	"weatherApi/config"
 	"weatherApi/internal/model"
 )
 
@@ -26,7 +26,7 @@ type weatherAPIResponse struct {
 // Returns a pointer to Weather model, HTTP-like status code, and error if any.
 // This function is used in both API responses and email updates.
 func FetchWithStatus(city string) (*model.Weather, int, error) {
-	apiKey := os.Getenv("WEATHER_API_KEY")
+	apiKey := config.C.WeatherAPIKey
 	if apiKey == "" {
 		return nil, http.StatusInternalServerError, fmt.Errorf("weather API key not set")
 	}
@@ -72,7 +72,7 @@ func FetchWithStatus(city string) (*model.Weather, int, error) {
 // Used during subscription to validate user input before storing in DB.
 // Returns false for 400/404, true for 200, and error for any other status.
 func CityExists(city string) (bool, error) {
-	apiKey := os.Getenv("WEATHER_API_KEY")
+	apiKey := config.C.WeatherAPIKey
 	if apiKey == "" {
 		return false, fmt.Errorf("weather API key not set")
 	}

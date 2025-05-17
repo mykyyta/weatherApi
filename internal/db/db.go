@@ -3,7 +3,8 @@ package db
 import (
 	"fmt"
 	"log"
-	"os"
+
+	"weatherApi/config"
 
 	"weatherApi/internal/model"
 
@@ -57,8 +58,8 @@ func InitDatabase(dbType, dsn string) (*gorm.DB, error) {
 // initializes the global DB instance, and applies migrations.
 // Use this in main.go to ensure the DB is ready before handling requests.
 func ConnectDefaultDB() {
-	dbType := os.Getenv("DB_TYPE") // e.g., "postgres" or "sqlite"
-	dsn := os.Getenv("DB_URL")
+	dbType := config.C.DBType // e.g., "postgres" or "sqlite"
+	dsn := config.C.DBUrl
 
 	var err error
 	DB, err = InitDatabase(dbType, dsn)

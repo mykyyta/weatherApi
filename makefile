@@ -23,3 +23,15 @@ test-quiet:
 
 # Run all checks: formatting, linting and tests		
 check: fmt lint test-quiet
+
+run:
+	docker-compose up --build
+
+build:
+	docker build -t weather-api .
+
+up:
+	docker-compose up -d
+
+down:
+	docker-compose down

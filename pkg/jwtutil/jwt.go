@@ -1,37 +1,34 @@
 package jwtutil
 
 import (
-	"time"
+	"weatherApi/config"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// SecretKey is used to sign and verify JWT tokens.
-// ⚠️ In production, this should be loaded from a secure environment variable, not hardcoded.
-var SecretKey = []byte("super-secret") // TODO: replace with os.Getenv("JWT_SECRET")
-
-// Generate creates a new JWT token with an email claim and 24h expiration.
-// The token can be used for confirming subscriptions or unsubscribing without login.
+// Generate creates a JWT token with an email claim.
+// The token has no expiration and must be verified manually if needed.
 func Generate(email string) (string, error) {
 	claims := jwt.MapClaims{
 		"email": email,
-		"exp":   time.Now().Add(24 * time.Hour).Unix(), // Token expires in 24 hours
+		// "exp" intentionally removed — token has no expiration
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(SecretKey)
+
+	return token.SignedString([]byte(config.C.JWTSecret))
 }
 
-// Parse validates the JWT token and extracts the email claim.
-// Returns an error if the token is invalid or the claim is missing/malformed.
+// Parse validates the JWT token signature and extracts the email claim.
+// It returns an error if the token is invalid, malformed, or missing the email.
 func Parse(tokenStr string) (string, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-		return SecretKey, nil
+		return []byte(config.C.JWTSecret), nil
 	})
 	if err != nil || !token.Valid {
 		return "", err
 	}
 
-	// Safely extract the "email" claim
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return "", jwt.ErrTokenMalformed

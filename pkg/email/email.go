@@ -2,7 +2,8 @@ package email
 
 import (
 	"fmt"
-	"os"
+
+	"weatherApi/config"
 
 	"weatherApi/internal/model"
 
@@ -18,11 +19,11 @@ import (
 // - EMAIL_FROM: sender email address
 // Fails if SendGrid responds with status code >= 400.
 func SendEmail(toEmail, subject, plainTextContent, htmlContent string) error {
-	from := mail.NewEmail("weatherApp", os.Getenv("EMAIL_FROM"))
+	from := mail.NewEmail("weatherApp", config.C.EmailFrom)
 	to := mail.NewEmail("User", toEmail)
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 
-	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
+	client := sendgrid.NewSendClient(config.C.SendGridKey)
 	response, err := client.Send(message)
 	if err != nil {
 		return err
