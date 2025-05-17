@@ -58,3 +58,31 @@ func FetchWithStatus(city string) (*model.Weather, int, error) {
 
 	return result, http.StatusOK, nil
 }
+
+func CityExists(city string) (bool, error) {
+	apiKey := os.Getenv("WEATHER_API_KEY")
+	if apiKey == "" {
+		return false, fmt.Errorf("weather API key not set")
+	}
+
+	url := fmt.Sprintf("https://api.weatherapi.com/v1/current.json?key=%s&q=%s", apiKey, city)
+	resp, err := http.Get(url)
+	if err != nil {
+		return false, fmt.Errorf("weather API request failed: %w", err)
+	}
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Printf("failed to close response body: %v", cerr)
+		}
+	}()
+
+	if resp.StatusCode == http.StatusOK {
+		return true, nil
+	}
+
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+
+	return false, fmt.Errorf("unexpected weather API response: %s", resp.Status)
+}

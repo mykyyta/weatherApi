@@ -19,12 +19,18 @@ func SetDB(db *gorm.DB) {
 
 func StartWeatherScheduler() {
 	log.Println("[Scheduler] started")
-	ticker := time.NewTicker(1 * time.Minute) // ticker := time.NewTicker(1 * time.Hour)
+
+	now := time.Now()
+	sleepDuration := time.Until(now.Truncate(time.Minute).Add(time.Minute))
+	log.Printf("[Scheduler] waiting %v to align to :00 seconds\n", sleepDuration)
+	time.Sleep(sleepDuration)
+
+	ticker := time.NewTicker(1 * time.Minute)
 	for {
 		now := time.Now()
-		sendDaily := now.Minute()%5 == 0 // sendDaily := now.Hour() == 9
+		sendDaily := now.Minute()%5 == 0 // або: now.Hour() == 9
 
-		log.Println("[Scheduler] running tick", now.Format("15:04"))
+		log.Println("[Scheduler] running tick", now.Format("15:04:05"))
 		sendWeatherUpdates("hourly")
 		if sendDaily {
 			sendWeatherUpdates("daily")
@@ -33,7 +39,6 @@ func StartWeatherScheduler() {
 		<-ticker.C
 	}
 }
-
 func sendWeatherUpdates(frequency string) {
 	var subs []model.Subscription
 	if err := DB.Where("is_confirmed = ? AND is_unsubscribed = ? AND frequency = ?", true, false, frequency).Find(&subs).Error; err != nil {
@@ -55,5 +60,5 @@ func ProcessSubscription(sub model.Subscription) error {
 	if err != nil {
 		return err
 	}
-	return email.SendWeatherEmail(sub.Email, weather, sub.City)
+	return email.SendWeatherEmail(sub.Email, weather, sub.City, sub.Token)
 }
