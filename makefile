@@ -1,16 +1,25 @@
-# Format all Go code using goimports (fix imports) and gofumpt (stricter formatting)
+# Format all Go files with goimports and gofumpt
 fmt:
 	goimports -w .
 	gofumpt -w .
 
-# Run static analysis and linting using golangci-lint
-# Make sure .golangci.yml is configured properly
+# Run golangci-lint static code analysis
 lint:
 	golangci-lint run ./...
 
-# Run all Go tests with verbose output
+# Run all tests with verbose output
 test:
 	go test -v ./...
 
-# Combined command: format, lint, and test (used for pre-commit or CI)
-check: fmt lint test
+# Run tests with filtered output to reduce noise
+# Removes GIN framework logs, 'record not found' errors,
+# and standard test execution messages
+test-quiet:
+	@echo "==> Running tests quietly..."
+	@go test ./... -v 2>&1 | \
+		grep -v -e '^\[GIN\]' \
+		        -e 'record not found' \
+		        -e '^=== RUN' \
+
+# Run all checks: formatting, linting and tests		
+check: fmt lint test-quiet

@@ -136,25 +136,3 @@ func sendConfirmationEmailAsync(email, token string) {
 		}
 	}()
 }
-
-// confirmHandler validates the token and marks the subscription as confirmed
-func confirmHandler(c *gin.Context) {
-	token := c.Param("token")
-
-	email, err := jwtutil.Parse(token)
-	if err != nil {
-		c.JSON(400, gin.H{"error": "invalid or expired token"})
-		return
-	}
-
-	var sub model.Subscription
-	if err := DB.Where("email = ?", email).First(&sub).Error; err != nil {
-		c.JSON(404, gin.H{"error": "not found"})
-		return
-	}
-
-	sub.IsConfirmed = true
-	DB.Save(&sub)
-
-	c.JSON(200, gin.H{"message": "subscription confirmed"})
-}

@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var fetchWeather = weatherapi.FetchWithStatus
+
 // getWeatherHandler retrieves current weather for a given city.
 // This endpoint is intended for real-time weather preview (e.g., before subscribing).
 // It requires a "city" query parameter and responds with weather data in JSON.
@@ -20,7 +22,7 @@ func getWeatherHandler(c *gin.Context) {
 	}
 
 	// Fetch weather using external API and return appropriate status code
-	weather, statusCode, err := weatherapi.FetchWithStatus(city)
+	weather, statusCode, err := fetchWeather(city)
 	if err != nil {
 		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return

@@ -18,14 +18,14 @@ func unsubscribeHandler(c *gin.Context) {
 	// Parse the token to extract the associated email
 	email, err := jwtutil.Parse(token)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired token"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token"})
 		return
 	}
 
 	// Retrieve subscription by email
 	var sub model.Subscription
 	if err := DB.Where("email = ?", email).First(&sub).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Subscription not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Token not found"})
 		return
 	}
 

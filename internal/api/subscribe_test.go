@@ -19,6 +19,9 @@ import (
 	"weatherApi/internal/model"
 )
 
+// setupTestRouterWithDB creates an in-memory SQLite database and initializes
+// a test router with all API routes registered. It also sets up a mock city
+// validator that accepts all cities.
 func setupTestRouterWithDB(t *testing.T) *gin.Engine {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
@@ -33,7 +36,7 @@ func setupTestRouterWithDB(t *testing.T) *gin.Engine {
 	SetDB(db)
 
 	cityValidator = func(city string) (bool, error) {
-		return true, nil // або: return city == "Kyiv", nil
+		return true, nil // Accept all cities in tests
 	}
 
 	gin.SetMode(gin.TestMode)
@@ -42,6 +45,10 @@ func setupTestRouterWithDB(t *testing.T) *gin.Engine {
 	return r
 }
 
+// TestSubscribe_Success verifies that a valid subscription request:
+// - Returns HTTP 200 OK
+// - Returns success message about confirmation email
+// - Creates subscription record in database
 func TestSubscribe_Success(t *testing.T) {
 	router := setupTestRouterWithDB(t)
 
@@ -61,6 +68,9 @@ func TestSubscribe_Success(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 }
 
+// TestSubscribe_MissingEmail verifies that a subscription request without email:
+// - Returns HTTP 400 Bad Request
+// - Contains "Invalid input" in error message
 func TestSubscribe_MissingEmail(t *testing.T) {
 	router := setupTestRouterWithDB(t)
 
@@ -75,9 +85,12 @@ func TestSubscribe_MissingEmail(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Invalid input") // залежить від твоєї валідації
+	assert.Contains(t, w.Body.String(), "Invalid input")
 }
 
+// TestSubscribe_InvalidFrequency verifies that subscription request with invalid frequency:
+// - Returns HTTP 400 Bad Request when frequency is not "daily" or "hourly"
+// - Contains "Invalid input" in error message
 func TestSubscribe_InvalidFrequency(t *testing.T) {
 	router := setupTestRouterWithDB(t)
 
@@ -93,9 +106,13 @@ func TestSubscribe_InvalidFrequency(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Invalid input") // залежить від твоєї помилки
+	assert.Contains(t, w.Body.String(), "Invalid input")
 }
 
+// TestSubscribe_DuplicateEmail verifies that subscribing with an existing email:
+// - Returns HTTP 409 Conflict
+// - Contains appropriate error message about duplicate subscription
+// - Does not create duplicate subscription in database
 func TestSubscribe_DuplicateEmail(t *testing.T) {
 	router := setupTestRouterWithDB(t)
 

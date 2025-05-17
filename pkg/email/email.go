@@ -2,10 +2,12 @@ package email
 
 import (
 	"fmt"
+	"os"
+
+	"weatherApi/internal/model"
+
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"os"
-	"weatherApi/internal/model"
 
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
