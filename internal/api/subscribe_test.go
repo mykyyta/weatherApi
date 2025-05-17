@@ -32,6 +32,10 @@ func setupTestRouterWithDB(t *testing.T) *gin.Engine {
 
 	SetDB(db)
 
+	cityValidator = func(city string) (bool, error) {
+		return true, nil // або: return city == "Kyiv", nil
+	}
+
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
 	RegisterRoutes(r)

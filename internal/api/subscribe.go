@@ -14,6 +14,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// Allows replacing weatherapi.CityExists in tests
+var cityValidator = weatherapi.CityExists
+
 type SubscribeRequest struct {
 	Email     string `form:"email" binding:"required,email"`
 	City      string `form:"city" binding:"required"`
@@ -70,7 +73,7 @@ func subscribeHandler(c *gin.Context) {
 
 // validateCity checks if the requested city exists using the external weather API
 func validateCity(city string) error {
-	ok, err := weatherapi.CityExists(city)
+	ok, err := cityValidator(city)
 	if err != nil {
 		return fmt.Errorf("Failed to validate city")
 	}

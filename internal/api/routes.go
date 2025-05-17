@@ -14,11 +14,12 @@ func RegisterRoutes(r *gin.Engine) {
 		api.POST("/subscribe", subscribeHandler)
 		api.GET("/confirm/:token", confirmHandler)
 		api.GET("/unsubscribe/:token", unsubscribeHandler)
-
-		// Debug/admin route — remove or protect in production
-		api.GET("/subscriptions", listSubscriptionsHandler)
-
 		api.GET("/weather", getWeatherHandler)
+
+		// Register only in non-production mode
+		if gin.Mode() != gin.ReleaseMode {
+			api.GET("/subscriptions", listSubscriptionsHandler)
+		}
 	}
 
 	if gin.Mode() != gin.TestMode {
