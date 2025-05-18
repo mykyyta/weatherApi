@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -15,6 +16,7 @@ type Config struct {
 	SendGridKey   string
 	EmailFrom     string
 	WeatherAPIKey string
+	BaseURL       string
 }
 
 var C *Config
@@ -30,6 +32,7 @@ func LoadConfig() {
 		SendGridKey:   mustGet("SENDGRID_API_KEY"),
 		EmailFrom:     getEnv("EMAIL_FROM", "weatherapp-no-reply@woolberry.ua"),
 		WeatherAPIKey: mustGet("WEATHER_API_KEY"),
+		BaseURL:       strings.TrimRight(getEnv("BASE_URL", "http://localhost:8080"), "/"),
 	}
 }
 

@@ -41,7 +41,7 @@ func SendEmail(toEmail, subject, plainTextContent, htmlContent string) error {
 func SendConfirmationEmail(toEmail, token string) error {
 	subject := "Підтвердіть вашу підписку на погодні сповіщення"
 
-	confirmURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", token)
+	confirmURL := fmt.Sprintf("%s/api/unsubscribe/%s", config.C.BaseURL, token)
 	plainText := "Будь ласка, підтвердіть вашу підписку: " + confirmURL
 	htmlContent := fmt.Sprintf(
 		`<p>Натисніть нижче для підтвердження вашої підписки:</p><p><a href="%s">Підтвердити підписку</a></p>`,
@@ -57,7 +57,7 @@ func SendWeatherEmail(toEmail string, weather *model.Weather, city string, token
 	caser := cases.Title(language.English)
 	subject := fmt.Sprintf("Ваше оновлення погоди для %s", caser.String(city))
 
-	unsubscribeURL := fmt.Sprintf("http://localhost:8080/api/unsubscribe/%s", token)
+	unsubscribeURL := fmt.Sprintf("%s/api/unsubscribe/%s", config.C.BaseURL, token)
 
 	plainText := fmt.Sprintf(
 		"Вітаємо!\n\nПоточна погода в %s:\nТемпература: %.1f°C\nВологість: %d%%\nОпис: %s\n\nЯкщо бажаєте скасувати підписку, перейдіть за посиланням: %s",

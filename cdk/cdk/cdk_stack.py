@@ -1,3 +1,5 @@
+import datetime
+
 from aws_cdk import (
     Stack,
     aws_ec2 as ec2,
@@ -74,7 +76,7 @@ class CdkStack(Stack):
         # SSM Secrets
         secret_keys = [
             "PORT", "DB_TYPE", "SENDGRID_API_KEY", "EMAIL_FROM",
-            "WEATHER_API_KEY", "DB_URL", "JWT_SECRET", "GIN_MODE"
+            "WEATHER_API_KEY", "DB_URL", "JWT_SECRET", "GIN_MODE", "BASE_URL"
         ]
         secrets = {
             key: ecs.Secret.from_ssm_parameter(
@@ -91,7 +93,9 @@ class CdkStack(Stack):
             image=ecs.ContainerImage.from_registry(f"{repo.repository_uri}:latest"),
             logging=ecs.LogDriver.aws_logs(stream_prefix="weather"),
             secrets=secrets,
-            environment={}
+            environment={
+                "FORCE_REDEPLOY": str(datetime.datetime.utcnow())
+            }
         )
         container.add_port_mappings(ecs.PortMapping(container_port=8080))
 
@@ -151,5 +155,22 @@ class CdkStack(Stack):
         )
 
         # Outputs
-        CfnOutput(self, "LoadBalancerURL", value=f"https://{subdomain}", description="Subdomain with HTTPS")
-        CfnOutput(self, "WeatherApiEcrUri", value=repo.repository_uri, description="Push image here")
+        CfnOutput(self, "LoadBalancerURL",
+            value=f"https://{subdomain}",
+            description="Subdomain with HTTPS"
+        )
+
+        CfnOutput(self, "WeatherApiEcrUri",
+            value=repo.repository_uri,
+            description="Push image here"
+        )
+
+        CfnOutput(self, "EcsClusterName",
+            value=cluster.cluster_name,
+            description="ECS Cluster Name"
+        )
+
+        CfnOutput(self, "EcsServiceName",
+            value=service.service_name,
+            description="ECS Service Name"
+        )

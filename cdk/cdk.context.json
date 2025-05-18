@@ -10,5 +10,8 @@
   "hosted-zone:account=273354659544:domainName=mykyyta.link:region=us-east-1": {
     "Id": "/hostedzone/Z04246723N5WHII1GNPNP",
     "Name": "mykyyta.link."
-  }
+  },
+  "acknowledged-issue-numbers": [
+    32775
+  ]
 }
