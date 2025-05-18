@@ -1,31 +1,16 @@
-# Build stage
-FROM golang:1.24 AS builder
-
+# Build stage (x86_64)
+FROM --platform=linux/amd64 golang:1.24 AS builder
 WORKDIR /app
-
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main ./cmd/server
 
-# Ensure binary is built for Linux (important on macOS M1/M2)
-RUN GOOS=linux GOARCH=amd64 go build -o main ./cmd/server
-
-# Runtime stage
-FROM alpine:latest
-
+# Runtime stage (distroless, no shell)
+FROM --platform=linux/amd64 gcr.io/distroless/static:nonroot
 WORKDIR /app
-
-RUN apk --no-cache add ca-certificates
-
 COPY --from=builder /app/main .
-
-# Templates (if used by html renderer)
 COPY templates/ templates/
-
+USER nonroot
 EXPOSE 8080
-
-# Ensure entrypoint binary is executable
-RUN chmod +x ./main
-
-CMD ["./main"]
+CMD ["/app/main"]

@@ -4,10 +4,16 @@ import os
 import aws_cdk as cdk
 
 from cdk.cdk_stack import CdkStack
+from aws_cdk import Environment
 
 
 app = cdk.App()
-CdkStack(app, "CdkStack",
+CdkStack(app, "WeatherApiProdStack",
+    env=Environment(
+        account=os.getenv("CDK_DEFAULT_ACCOUNT"),
+        region=os.getenv("CDK_DEFAULT_REGION")
+    )
+
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
