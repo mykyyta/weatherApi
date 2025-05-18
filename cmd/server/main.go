@@ -17,6 +17,14 @@ import (
 )
 
 func main() {
+	// ─── GIN Mode Setup ─────────────────────────────────────
+	mode := os.Getenv("GIN_MODE")
+	if mode == "" {
+		mode = gin.DebugMode // ← default DEBUG
+	}
+	gin.SetMode(mode)
+	log.Printf("🚀 Starting in %s mode\n", gin.Mode())
+
 	// Load application configuration (from environment or .env file)
 	config.LoadConfig()
 
