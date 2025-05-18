@@ -22,6 +22,11 @@ func RegisterRoutes(r *gin.Engine) {
 		}
 	}
 
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
 	if gin.Mode() != gin.TestMode {
 		r.LoadHTMLGlob("templates/*.html")
 		r.Static("/static", "./static")
