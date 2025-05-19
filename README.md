@@ -92,14 +92,17 @@ docker-compose up --build
 ## Deployment
 
 This project is deployed to **AWS** using AWS CDK (Python).  
-Key components:
+Key AWS components:
 
 - **ECS Fargate** — runs the Docker container
 - **Application Load Balancer (ALB)** — handles HTTPS traffic
 - **ACM Certificate** — enables HTTPS for `weather-api.mykyyta.link`
 - **Route 53** — manages DNS for the custom domain
 - **ECR** — stores the Docker image
-- **SSM Parameter Store** — stores environment secrets securely
-- **Neon** — provides the managed PostgreSQL database
+- **SSM Parameter Store** — securely stores environment secrets
+
+### Database
+
+- **Neon** — managed PostgreSQL database
 
 🔗 Live API: [https://weather-api.mykyyta.link](https://weather-api.mykyyta.link)
